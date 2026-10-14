@@ -8,11 +8,14 @@
 # The app's render (tests/vast/orchestrate3.sh) sees /opt/vast/RENDER_IMAGE_OK, rebuilds the font index for the copied
 # fonts and skips the ~5.5 min setup.
 FROM ubuntu:20.04
-ENV DEBIAN_FRONTEND=noninteractive HOME=/home/shipturtle
+# NO "ENV HOME": vast.ai's ssh start-up puts the login key in $HOME/.ssh, and root's sshd reads /root/.ssh. With
+# HOME=/home/shipturtle no login worked (cs-render:20261014 and cs-box on 2026-10-13, both "FAILED: ssh"). HOME is set
+# only while the setup runs; the app starts its renderer with HOME=/home/shipturtle itself (orchestrate3.sh).
+ENV DEBIAN_FRONTEND=noninteractive
 COPY setup/remote-setup.sh setup/font-packages.txt /opt/vast/
 RUN mkdir -p /home/shipturtle/.hyperframes-tools /opt/vast \
  && apt-get update -qq && apt-get install -y -qq --no-install-recommends openssh-server >/dev/null \
- && bash /opt/vast/remote-setup.sh \
+ && HOME=/home/shipturtle bash /opt/vast/remote-setup.sh \
  && curl -fsSL -o /tmp/ff.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
  && tar -xJf /tmp/ff.tar.xz -C /tmp && cp /tmp/ffmpeg-*-amd64-static/ffmpeg /home/shipturtle/.hyperframes-tools/ffmpeg7 \
  && echo "e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99  /home/shipturtle/.hyperframes-tools/ffmpeg7" | sha256sum -c - \
