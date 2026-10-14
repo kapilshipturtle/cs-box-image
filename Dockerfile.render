@@ -1,0 +1,21 @@
+# cs-render: the RENDER-ONLY box image (2026-10-14, user: "fastest and cheapest and 0% compromise").
+# - The same Ubuntu 20.04 and the same setup/remote-setup.sh that the app's render boxes run at rent time. Every
+#   version is pinned: ffmpeg 4.2.7 from the frozen focal archive, Node 22.22.0, HyperFrames 0.8.92 + its pinned Chrome,
+#   the numpy / Pillow / playwright pins and the font packages.
+# - Plus the static ffmpeg 7.0.2 the app calls. Its sha256 must equal the laptop's binary; the build fails on any other.
+# - No torch / vision / freedom (that is cs-box), so a box pulls it fast. NO app code, NO keys, NO laptop fonts: those
+#   are copied at rent time.
+# The app's render (tests/vast/orchestrate3.sh) sees /opt/vast/RENDER_IMAGE_OK, rebuilds the font index for the copied
+# fonts and skips the ~5.5 min setup.
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive HOME=/home/shipturtle
+COPY setup/remote-setup.sh setup/font-packages.txt /opt/vast/
+RUN mkdir -p /home/shipturtle/.hyperframes-tools /opt/vast \
+ && apt-get update -qq && apt-get install -y -qq --no-install-recommends openssh-server >/dev/null \
+ && bash /opt/vast/remote-setup.sh \
+ && curl -fsSL -o /tmp/ff.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
+ && tar -xJf /tmp/ff.tar.xz -C /tmp && cp /tmp/ffmpeg-*-amd64-static/ffmpeg /home/shipturtle/.hyperframes-tools/ffmpeg7 \
+ && echo "e7e7fb30477f717e6f55f9180a70386c62677ef8a4d4d1a5d948f4098aa3eb99  /home/shipturtle/.hyperframes-tools/ffmpeg7" | sha256sum -c - \
+ && touch /opt/vast/RENDER_IMAGE_OK \
+ && rm -rf /var/lib/apt/lists/* /root/.cache/pip /home/shipturtle/.cache/pip /tmp/*
+LABEL org.opencontainers.image.source=https://github.com/kapilshipturtle/cs-box-image

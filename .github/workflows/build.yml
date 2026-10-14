@@ -1,5 +1,6 @@
 name: build cs-box
-on: { push: { branches: [main] }, workflow_dispatch: {} }
+# only when cs-box's own files change (2026-10-14: cs-render has its own workflow)
+on: { push: { branches: [main], paths: [Dockerfile, "setup/**"] }, workflow_dispatch: {} }
 permissions: { contents: read, packages: write }
 jobs:
   build:
